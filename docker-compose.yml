@@ -14,12 +14,17 @@ services:
     build: .
     deploy:
       replicas: 3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     environment:
+      - PYTHONBUFFERED=1
       - CHECK_PATH=/app
       - REDIS_HOST=redis-db
     user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
-    volumes:
-      - ./logs:/app/logs
     depends_on:
       - redis-db
 
