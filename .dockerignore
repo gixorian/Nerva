@@ -1,2 +1,8 @@
-venv/
-.git/
+.env
+.env.example
+.git
+.github
+__pycache__
+venv
+.venv
+*.log
