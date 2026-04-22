@@ -2,26 +2,16 @@
 
 A containerized Python service that validates system paths and provides persistent logging. Built as a demonstration of CI/CD, Docker volume management, and secure container practices.
 
-## Quick Start
+## Quick Start (Web API)
 
 To run the utility with default settings:
 ```bash
-docker run --rm ghcr.io/gixorian/devops-health-check:latest
+docker run --rm -p 8000:8000 ghcr.io/gixorian/devops-health-check:latest
 ```
-
-## Advanced Usage (Persistance)
-
-To map local logs and check a specific path, use the following command.
+Then visit: `http://localhost:8000/health?path=/etc/passwd`
 > [!NOTE]
 > The ```--rm``` flag ensures the container is removed after execution to save disk space
-```bash
-mkdir -p logs
-docker run --rm \
--u $(id -u):$(id -g) \
--v $(pwd)/logs:/app/logs \
--e CHECK_PATH=/etc/passwd \
-ghcr.io/gixorian/devops-health-check:latest
-```
+
 
 ## Configuration
 
