@@ -1,14 +1,19 @@
 import os
 import redis
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, HTTPException, Response, status, Depends
 from health_check import check_path
 from tasks import process
+from sqlalchemy.orm import Session
+from database import Base, engine, get_db
+from models import TaskRecord
 
 app = FastAPI()
 
 r = redis.Redis(
     host=os.getenv("REDIS_HOST", "localhost"), port=6379, decode_responses=True
 )
+
+Base.metadata.create_all(bind=engine)
 
 
 @app.get("/stats", status_code=200)
@@ -42,8 +47,24 @@ def health_endpoint(response: Response, path: str = ""):
 
 
 @app.get("/process", status_code=202)
-def process_endpoint(response: Response):
-    process.delay()  # type: ignore
+def process_endpoint(response: Response, db: Session = Depends(get_db)):
+    new_task = TaskRecord(status="PENDING")
+    db.add(new_task)
+    db.commit()
+    db.refresh(new_task)
+
+    process.delay(new_task.id)  # type: ignore
     response.status_code = status.HTTP_202_ACCEPTED
-    queue_length = r.llen("celery")
-    return {"order in queue": queue_length, "status": "working"}
+    return {"status": "working", "task_id": new_task.id}
+
+
+@app.get("/status/{task_id}", status_code=200)
+def task_status_endpoint(task_id, db: Session = Depends(get_db)):
+    task = db.query(TaskRecord).filter(TaskRecord.id == task_id).first()
+
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Task {task_id} not found"
+        )
+
+    return {"task_id": task.id, "status": task.status}
