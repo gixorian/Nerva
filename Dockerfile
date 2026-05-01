@@ -6,11 +6,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
 
-COPY health_check.py .
-COPY tasks.py .
-COPY main.py .
-COPY database.py .
-COPY models.py .
+COPY nerva/ nerva/
 
 RUN chown -R appuser:appgroup /app
 USER appuser
