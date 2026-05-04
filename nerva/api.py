@@ -4,6 +4,7 @@ from nerva.database import SessionLocal, engine, Base
 from nerva.models import TaskRecord
 from nerva.engine import nerva_worker
 from typing import List
+from nerva.schemas import TaskSchema
 
 Base.metadata.create_all(bind=engine)
 
@@ -23,7 +24,7 @@ def health_check():
     return {"status": "ok", "service": "Nerva Engine"}
 
 
-@app.get("/status/{task_id}")
+@app.get("/status/{task_id}", response_model=TaskSchema)
 def get_task_status(task_id: int, db: Session = Depends(get_db)):
     task = db.query(TaskRecord).filter(TaskRecord.id == task_id).first()
 
@@ -33,7 +34,7 @@ def get_task_status(task_id: int, db: Session = Depends(get_db)):
     return task
 
 
-@app.get("/history", response_model=List[dict])
+@app.get("/history", response_model=List[TaskSchema])
 def get_all_tasks(limit: int = 10, db: Session = Depends(get_db)):
     return (
         db.query(TaskRecord).order_by(TaskRecord.created_at.desc()).limit(limit).all()
